@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#000000" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="v*ra" />
+
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="canonical" href="https://www.vora.biz/" />
+    <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://vora-internal-portal.pages.dev" crossorigin />
+
+    <title>v*ra — careers · making money should be fun</title>
+    <meta name="description" content="The world's most viral AI media operation where making money is fun." />
+
+    <!-- Open Graph (Instagram, Facebook, LinkedIn, Slack, Discord, iMessage) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Vora" />
+    <meta property="og:url" content="https://www.vora.biz/" />
+    <meta property="og:title" content="v*ra — making money should be fun" />
+    <meta property="og:description" content="The world's most viral AI media operation where making money is fun." />
+    <meta property="og:image" content="https://www.vora.biz/og.png" />
+    <meta property="og:image:secure_url" content="https://www.vora.biz/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="v*ra — careers" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter / X cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="v*ra — making money should be fun" />
+    <meta name="twitter:description" content="The world's most viral AI media operation where making money is fun." />
+    <meta name="twitter:image" content="https://www.vora.biz/og.png" />
+    <meta name="twitter:image:alt" content="v*ra — careers" />
+
+    <!-- Structured data: Organization + JobPosting hub for SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Vora",
+      "alternateName": "v*ra",
+      "url": "https://www.vora.biz",
+      "logo": "https://www.vora.biz/vora-logo.png",
+      "description": "The world's most viral AI media operation where making money is fun."
+    }
+    </script>
+
+    <style>
+      html, body, #root {
+        margin: 0;
+        padding: 0;
+        background: #000;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html { scroll-behavior: smooth; }
+      body {
+        font-family: 'Switzer', 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        color: #fff;
+      }
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-track { background: #000; }
+      ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 999px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+      /* Keyboard focus ring — visible only on keyboard nav, suppressed
+         for mouse clicks. Crucial for accessibility on a dark site. */
+      :focus { outline: none; }
+      :focus-visible {
+        outline: 2px solid rgba(235, 179, 6, 0.85);
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+      button:focus-visible, a:focus-visible {
+        outline-offset: 4px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
