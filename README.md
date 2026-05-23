@@ -1,81 +1,48 @@
-# vora — opportunity map
+# vora.biz
 
-The Vora hiring page. Pannable space canvas with interactive job planets.
+Public marketing site for Vora. Live at [vora.biz](https://vora.biz).
 
----
+The visual core is a pannable space canvas with interactive job planets (the opportunity map). Visitors can apply via embedded Ashby integration, and short links (`/r/<code>`) redirect through campaign attribution.
 
-## Run locally on your laptop, test from your phone
+## Stack
 
-If your laptop and phone are on the same Wi-Fi, you can test from your phone in 60 seconds:
+- Vite + React (SPA)
+- Vercel serverless functions in `api/` (apply, ashby-apply, r/[code])
+- Deployed on Vercel (project: `vora-external`)
+- GitHub repo: [`voramodels/vora.biz`](https://github.com/voramodels/vora.biz)
 
-```bash
-npm install
-npm run dev
-```
-
-Vite will print two URLs:
-
-```
-  VITE ready in 312 ms
-
-  ➜  Local:   http://localhost:5173/
-  ➜  Network: http://192.168.1.42:5173/   ← open THIS one on your phone
-```
-
-Open the **Network** URL on your phone in Safari/Chrome. Refresh after edits.
-
----
-
-## Deploy publicly to test from anywhere (Vercel — free, 5 minutes)
-
-### Option 1: GitHub + Vercel dashboard (recommended for ongoing iteration)
-
-1. Push this folder to a new GitHub repo:
-   ```bash
-   git init
-   git add .
-   git commit -m "initial"
-   gh repo create vora-opportunity-map --public --source=. --push
-   ```
-   (Or create the repo on github.com manually and push.)
-
-2. Go to https://vercel.com → "Add New Project" → import the repo
-3. Vercel auto-detects Vite. Click **Deploy**.
-4. ~90 seconds later you get a URL like `vora-opportunity-map.vercel.app`
-5. Every push to main auto-redeploys.
-
-### Option 2: Vercel CLI (one-shot deploy, no GitHub needed)
+## Run locally
 
 ```bash
-npm install -g vercel
-vercel
+pnpm install
+pnpm dev
 ```
 
-Follow the prompts. First deploy creates the project, gives you a public URL. Subsequent runs of `vercel` redeploy in seconds.
+Then open http://localhost:5173. Vite also prints a Network URL — open that on your phone (same Wi-Fi) to test the in-app browser flow.
 
-### Option 3: Netlify Drop (zero setup)
+## Deploy
+
+**Push to `main`.** Vercel auto-deploys from this repo — never run `vercel deploy` from CLI, since it would ship a state that doesn't exist on GitHub.
 
 ```bash
-npm install
-npm run build
+git add -A
+git commit -m "..."
+git push origin main
 ```
 
-Then drag the `dist/` folder onto https://app.netlify.com/drop. Instant public URL. Good for one-off testing.
+## Commit conventions
 
----
+The Update Log on teamvora.net (Report Bugs → Update Log) reads commits from this repo to surface who's pushing changes and when. A few small habits keep that signal clean:
 
-## Test in IG/TikTok in-app browser
+- Commit with a real-name git identity (not "Vora Codex" or a generic bot name). Set it once globally on your machine:
+  ```bash
+  git config --global user.name "Your Real Name"
+  git config --global user.email "you@vora.example"
+  ```
+- Write a 5–12 word subject describing what changed, then add detail in the body if useful. Example: `"Tweak opportunity-map planet hover state"`.
+- One logical change per commit when possible. The Update Log shows each commit as its own row.
 
-Once you have a public URL:
-
-1. DM the URL to yourself on Instagram
-2. Tap the link from inside IG — it opens in IG's in-app browser
-3. This is exactly what your VAs will see when clicking your IG bio link
-4. Test drag, tap, planet expansion, panel open
-
-For TikTok, same flow via TikTok DM.
-
----
+Any AI coding agent (Claude, Codex, Cursor, etc.) will honor your local git config — no agent-specific setup required.
 
 ## File structure
 
@@ -83,11 +50,18 @@ For TikTok, same flow via TikTok DM.
 vora-deploy/
 ├── package.json
 ├── vite.config.js
-├── index.html             ← viewport meta + base CSS
+├── index.html
 ├── src/
-│   ├── main.jsx           ← React entry
-│   └── vora-opportunity-map.jsx   ← the artifact
-└── .gitignore
+│   ├── main.jsx
+│   ├── vora-opportunity-map.jsx   ← the canvas + planets
+│   └── campaign-attribution.js
+├── api/
+│   ├── apply.js
+│   ├── ashby-apply.js             ← Ashby integration
+│   └── r/[code].js                ← short-link redirector
+└── public/                         ← intro videos, posters, manifest
 ```
 
-To update the page, edit `src/vora-opportunity-map.jsx` and either redeploy or `npm run dev` for live reload.
+## Related
+
+- [voramodels/internal-portal](https://github.com/voramodels/internal-portal) — internal team portal (teamvora.net)
