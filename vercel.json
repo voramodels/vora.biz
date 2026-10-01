@@ -1,6 +1,55 @@
 {
+  "functions": {
+    "api/ashby-apply.js": {
+      "maxDuration": 300
+    }
+  },
   "rewrites": [
-    { "source": "/r/(.*)", "destination": "/api/r/$1" },
-    { "source": "/((?!api|assets|.*\\..*).*)", "destination": "/index.html" }
+    {
+      "source": "/r/(.*)",
+      "destination": "/api/r/$1"
+    },
+    {
+      "source": "/p/:path*",
+      "destination": "https://vora-internal-portal.pages.dev/:path*"
+    },
+    {
+      "source": "/((?!api|assets|p/|.*\\..*).*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "(www\\.)?apply-vora\\.com"
+        }
+      ],
+      "destination": "/apply.html"
+    },
+    {
+      "source": "/((?!api|assets|p/|.*\\..*).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "(www\\.)?apply-vora\\.com"
+        }
+      ],
+      "destination": "/apply",
+      "permanent": false
+    },
+    {
+      "source": "/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "(www\\.)?apply-vora\\.com"
+        }
+      ],
+      "destination": "/apply",
+      "permanent": false
+    }
   ]
 }

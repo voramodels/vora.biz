@@ -12,7 +12,21 @@
 // who reloads the page mid-session doesn't inflate the counter.
 
 const PORTAL_BASE = "https://vora-internal-portal.pages.dev";
+// The job-board funnel domain never beacons to a Vora host (see
+// FUNNEL_HOSTS in vora-opportunity-map.jsx); attribution rides the
+// application record itself there.
+const SILENT_HOSTS = ["apply-vora.com", "www.apply-vora.com"];
+// A hiring company's apply domain (the portal's hiring-sites Worker) is a
+// funnel host too; it marks its pages.
+const ON_SILENT_HOST = typeof window !== "undefined"
+  && (SILENT_HOSTS.includes(String(window.location.hostname || "").toLowerCase())
+    || Boolean(typeof document !== "undefined" && document.querySelector('meta[name="vora-funnel-host"]')));
 const STORAGE_SRC_KEY = "vora_attrib_src_v1";
+// Explicit campaign tags (?src= / UTM) persist for 7 days — matching
+// Meta's click-attribution window — so a candidate who clicks an ad,
+// leaves, and returns days later to apply is still credited to the ad.
+const STORAGE_SRC_7D_KEY = "vora_attrib_src_7d_v1";
+const SRC_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const STORAGE_BEACON_SENT_KEY = "vora_attrib_beacon_sent_v1";
 // Referral tokens live in a separate sessionStorage slot from `src`
 // because the slug normalizer for `src` aggressively lowercases — that
@@ -75,14 +89,36 @@ function readDefaultSrcFromPath() {
 }
 
 function getStoredSrc() {
+  // 7-day explicit campaign tag wins; an unexpired ad click outranks
+  // both the session default and a later organic landing.
+  try {
+    const raw = window.localStorage.getItem(STORAGE_SRC_7D_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.value && Number(parsed.exp) > Date.now()) return parsed.value;
+      window.localStorage.removeItem(STORAGE_SRC_7D_KEY);
+    }
+  } catch { /* localStorage may be blocked in private mode */ }
   try { return window.sessionStorage.getItem(STORAGE_SRC_KEY) || ""; }
   catch { return ""; }
 }
 
-function setStoredSrc(value) {
-  try {
-    if (value) window.sessionStorage.setItem(STORAGE_SRC_KEY, value);
-  } catch { /* sessionStorage may be blocked in private mode */ }
+// Explicit campaign tags (from the URL) persist 7 days; path-derived
+// defaults like "direct-<slug>" stay session-scoped — a default is not
+// a click and must not mask a real campaign tag for a week.
+function setStoredSrc(value, { explicit = false } = {}) {
+  if (!value) return;
+  if (explicit) {
+    try {
+      window.localStorage.setItem(
+        STORAGE_SRC_7D_KEY,
+        JSON.stringify({ value, exp: Date.now() + SRC_TTL_MS }),
+      );
+      return;
+    } catch { /* fall back to session scope below */ }
+  }
+  try { window.sessionStorage.setItem(STORAGE_SRC_KEY, value); }
+  catch { /* sessionStorage may be blocked in private mode */ }
 }
 
 function getCampaignSource() {
@@ -135,12 +171,12 @@ function sendClickBeacon(campaign) {
   try {
     if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
       const blob = new Blob([payload], { type: "application/json" });
-      dispatched = navigator.sendBeacon(`${PORTAL_BASE}/api/track/click`, blob);
+      dispatched = ON_SILENT_HOST ? true : navigator.sendBeacon(`${PORTAL_BASE}/api/track/click`, blob);
     }
   } catch { /* fall through */ }
   if (!dispatched) {
     try {
-      fetch(`${PORTAL_BASE}/api/track/click`, {
+      if (!ON_SILENT_HOST) fetch(`${PORTAL_BASE}/api/track/click`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: payload,
@@ -159,7 +195,7 @@ function sendClickBeacon(campaign) {
 (function captureOnLoad() {
   const fromUrl = readSrcFromUrl();
   if (fromUrl) {
-    setStoredSrc(fromUrl);
+    setStoredSrc(fromUrl, { explicit: true });
     sendClickBeacon(fromUrl);
   } else {
     const stored = getStoredSrc();
