@@ -9496,9 +9496,9 @@ function Stage2Reason({ a, token, busy, err, offsetRef, onBegin, onSave, onFinis
           <span className="vora-s2-eyebrow">Part 3 of 4</span>
           <Stage2Progress step={3} total={4} />
         </div>
-        <h2 className="vora-s2-h2">Reasoning</h2>
+        <h2 className="vora-s2-h2">5-minute pop quiz</h2>
         {addedLater && (
-          <p className="vora-s2-prompt">Two short parts were added since you took the quiz: reasoning (5 minutes), then a few questions on how you like to work (about 2 minutes).</p>
+          <p className="vora-s2-prompt">Two short parts were added since you took the quiz: a 5-minute pop quiz, then a few questions on how you like to work (about 2 minutes).</p>
         )}
         <p className="vora-s2-prompt">12 questions in 5 minutes. You can skip and come back. Most people don't finish, so keep moving.</p>
         <p className="vora-s2-prompt">The clock starts when you press Start and keeps running if you leave the page.</p>
@@ -9514,7 +9514,7 @@ function Stage2Reason({ a, token, busy, err, offsetRef, onBegin, onSave, onFinis
   return (
     <div className="vora-s2-card vora-s2-qcard">
       <div className="vora-s2-eyebrow-row">
-        <span className="vora-s2-eyebrow">Part 3 of 4 · Reasoning</span>
+        <span className="vora-s2-eyebrow">Part 3 of 4 · Pop quiz</span>
         <span className={`vora-s2-clock${left < 60000 ? " is-low" : ""}`} aria-label="Time left">{fmtClock(Math.ceil(left / 1000))}</span>
       </div>
       <div className="vora-s2-dots">
@@ -9680,6 +9680,10 @@ function Stage2View({ token, chrome = "vora", brand = null, doneCopy = null, cta
   // four parts and "submitted" (question 2 in) leads on to them.
   const parts = a && a.parts;
   const total = parts ? 4 : 2;
+  // With Parts 3–4 the landing says what's coming, and a timed CTA
+  // ("Begin the 8-minute assessment") carries the longer total.
+  const landingEstimate = parts ? "2 questions + a quick 5-minute pop quiz · about 15 minutes" : estimate;
+  const landingCta = parts ? ctaLabel.replace(/\b\d+-minute\b/, "15-minute") : ctaLabel;
   const step = !a
     ? ""
     : a.status === "submitted"
@@ -9761,7 +9765,7 @@ function Stage2View({ token, chrome = "vora", brand = null, doneCopy = null, cta
         )}
 
         {step === "landing" && (
-          <Stage2Landing a={a} cfg={cfg} busy={busy} err={err} ctaLabel={ctaLabel} estimate={parts ? "Takes about 15 minutes" : estimate} onBegin={() => send({ event: "start", content: contentSnapshot() })} />
+          <Stage2Landing a={a} cfg={cfg} busy={busy} err={err} ctaLabel={landingCta} estimate={landingEstimate} onBegin={() => send({ event: "start", content: contentSnapshot() })} />
         )}
 
         {(step === "q1" || step === "q2") && (
