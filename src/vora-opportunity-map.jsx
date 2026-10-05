@@ -8597,7 +8597,7 @@ function useStage2Draft(key, initial) {
   return [value, setValue];
 }
 
-function AutoGrowTextarea({ value, onChange, placeholder, minRows = 5, mono = false, ariaLabel }) {
+function AutoGrowTextarea({ value, onChange, placeholder, minRows = 5, mono = false, ariaLabel, onPaste }) {
   const ref = useRef(null);
   // Grow to fit without ever collapsing first. The usual trick (height =
   // "auto", read scrollHeight, set height) shrinks the box for the
@@ -8627,6 +8627,7 @@ function AutoGrowTextarea({ value, onChange, placeholder, minRows = 5, mono = fa
       aria-label={ariaLabel}
       onChange={(e) => onChange(e.target.value)}
       onBlur={() => fit(true)}
+      onPaste={onPaste}
       spellCheck="true"
     />
   );
@@ -9115,6 +9116,7 @@ function Stage2Landing({ a, cfg, busy, err, onBegin, ctaLabel = "Begin Assessmen
 function Stage2Q1({ cfg, token, busy, err, onSubmit, total = 2 }) {
   const q = cfg.q1;
   const [text, setText] = useStage2Draft(`vora-s2:${token}:q1`, "");
+  const [paste, onPaste] = useStage2Pastes(`vora-s2:${token}:q1paste`);
   const chars = text.trim().length;
   const min = q.minChars || 40;
   const ready = chars >= min;
@@ -9127,18 +9129,31 @@ function Stage2Q1({ cfg, token, busy, err, onSubmit, total = 2 }) {
       <h2 className="vora-s2-h2">{q.title}</h2>
       <p className="vora-s2-prompt">{q.prompt}</p>
       <Stage2Example cfg={q.example} kind="q1" />
-      <AutoGrowTextarea value={text} onChange={setText} minRows={7} ariaLabel="Your answer to question 1" />
+      <AutoGrowTextarea value={text} onChange={setText} minRows={7} ariaLabel="Your answer to question 1" onPaste={onPaste} />
       <div className="vora-s2-foot">
         <span className="vora-s2-count">
           {ready ? `${stage2Words(text).length} words` : `${chars} / ${min} characters`}
         </span>
-        <button type="button" className="vora-s2-cta vora-s2-cta-sm" disabled={!ready || busy} onClick={() => onSubmit(text)}>
+        <button type="button" className="vora-s2-cta vora-s2-cta-sm" disabled={!ready || busy} onClick={() => onSubmit(text, paste)}>
           {busy ? "Submitting…" : "Submit answer 1"} <span aria-hidden>→</span>
         </button>
       </div>
       {err && <p className="vora-s2-error" role="alert">{err}</p>}
     </div>
   );
+}
+
+// Pastes into an answer box: how many and how much text. Reviewers see
+// this beside the answer (it isn't a block — pasting a URL is fine). Kept
+// in localStorage with the draft so a reload mid-answer doesn't reset it.
+function useStage2Pastes(key) {
+  const [paste, setPaste] = useStage2DraftJson(key, { pastes: 0, pastedChars: 0 });
+  const onPaste = (e) => {
+    let len = 0;
+    try { len = (e.clipboardData && e.clipboardData.getData("text") || "").length; } catch { /* */ }
+    setPaste((p) => ({ pastes: (p.pastes || 0) + 1, pastedChars: (p.pastedChars || 0) + len }));
+  };
+  return [paste, onPaste];
 }
 
 // Small JSON draft (format controls) that survives a reload.
@@ -9164,6 +9179,8 @@ function Stage2Q2({ cfg, a, token, busy, err, onSubmit, onRevise, total = 2 }) {
   const original = (a.content && a.content.prompt) || q.draft;
   const defaults = (a.content && a.content.q2Defaults) || q.defaults || { aspect: "9:16", seconds: 20 };
   const [text, setText] = useStage2Draft(`vora-s2:${token}:q2`, original);
+  const [paste, onPaste] = useStage2Pastes(`vora-s2:${token}:q2paste`);
+  const [revPaste, onRevPaste] = useStage2Pastes(`vora-s2:${token}:q1revpaste`);
   // Aspect is pinned to 9:16 for everyone; a saved draft from the old control is overridden.
   const [fmtRaw, setFmtRaw] = useStage2DraftJson(`vora-s2:${token}:q2fmt`, { aspect: "9:16", seconds: String(defaults.seconds) });
   const fmt = { ...fmtRaw, aspect: "9:16" };
@@ -9217,7 +9234,7 @@ function Stage2Q2({ cfg, a, token, busy, err, onSubmit, onRevise, total = 2 }) {
           </label>
         </div>
       </div>
-      <AutoGrowTextarea value={text} onChange={setText} minRows={8} mono ariaLabel="The prompt to edit" />
+      <AutoGrowTextarea value={text} onChange={setText} minRows={8} mono ariaLabel="The prompt to edit" onPaste={onPaste} />
       <div className="vora-s2-foot">
         <span className="vora-s2-count">
           {changed ? chipParts.join(" · ") : "Unchanged"}
@@ -9230,7 +9247,7 @@ function Stage2Q2({ cfg, a, token, busy, err, onSubmit, onRevise, total = 2 }) {
           className="vora-s2-cta vora-s2-cta-sm"
           disabled={busy || !text.trim() || !secondsOk}
           title={!secondsOk ? "Set a length in seconds" : undefined}
-          onClick={() => onSubmit(text, { aspect: fmt.aspect, seconds: secondsNum })}
+          onClick={() => onSubmit(text, { aspect: fmt.aspect, seconds: secondsNum }, paste)}
         >
           {busy ? "Submitting…" : changed ? "Submit assessment" : "Submit unchanged"} <span aria-hidden>→</span>
         </button>
@@ -9245,14 +9262,14 @@ function Stage2Q2({ cfg, a, token, busy, err, onSubmit, onRevise, total = 2 }) {
         </button>
         {reviseOpen && (
           <div className="vora-s2-revise-body">
-            <AutoGrowTextarea value={rev} onChange={(v) => { setRev(v); setRevSaved(false); }} minRows={5} ariaLabel="Revise your answer to question 1" />
+            <AutoGrowTextarea value={rev} onChange={(v) => { setRev(v); setRevSaved(false); }} minRows={5} ariaLabel="Revise your answer to question 1" onPaste={onRevPaste} />
             <div className="vora-s2-foot">
               <span className="vora-s2-count">Your first version stays on record.</span>
               <button
                 type="button"
                 className="vora-s2-ghost"
                 disabled={busy || !revDirty}
-                onClick={async () => { const ok = await onRevise(rev); if (ok) setRevSaved(true); }}
+                onClick={async () => { const ok = await onRevise(rev, revPaste); if (ok) setRevSaved(true); }}
               >
                 {revSaved && !revDirty ? "Saved" : "Save revision"}
               </button>
@@ -9781,7 +9798,7 @@ function Stage2View({ token, chrome = "vora", brand = null, doneCopy = null, cta
                   token={token}
                   busy={busy}
                   err={err}
-                  onSubmit={(text) => send({ event: "q1-submit", text, ms: Date.now() - qStartRef.current, content: contentSnapshot() })}
+                  onSubmit={(text, paste) => send({ event: "q1-submit", text, ms: Date.now() - qStartRef.current, content: contentSnapshot(), ...paste })}
                 />
               ) : (
                 <Stage2Q2
@@ -9791,8 +9808,8 @@ function Stage2View({ token, chrome = "vora", brand = null, doneCopy = null, cta
                   token={token}
                   busy={busy}
                   err={err}
-                  onSubmit={(text, settings) => send({ event: "q2-submit", text, ms: Date.now() - qStartRef.current, promptShown: cfg.q2.draft, settings, defaults: cfg.q2.defaults || null })}
-                  onRevise={(text) => send({ event: "q1-revise", text })}
+                  onSubmit={(text, settings, paste) => send({ event: "q2-submit", text, ms: Date.now() - qStartRef.current, promptShown: cfg.q2.draft, settings, defaults: cfg.q2.defaults || null, ...paste })}
+                  onRevise={(text, paste) => send({ event: "q1-revise", text, ...paste })}
                 />
               )}
             </div>
