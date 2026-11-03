@@ -42,7 +42,13 @@ async function loadJobs() {
   const now = Date.now();
   if (jobsCache && (now - jobsCacheAt) < JOBS_CACHE_TTL_MS) return jobsCache;
   const sep = PORTAL_JOBS_URL.includes("?") ? "&" : "?";
-  const r = await fetch(`${PORTAL_JOBS_URL}${sep}includeHidden=true`, { cache: "no-store" });
+  // The portal lists hidden roles only to callers holding the shared apply
+  // secret, so an application to a hidden role still resolves its title.
+  const secret = (process.env.APPLY_RECORD_SECRET || "").trim();
+  const r = await fetch(`${PORTAL_JOBS_URL}${sep}includeHidden=true`, {
+    cache: "no-store",
+    headers: secret ? { "x-apply-secret": secret } : {},
+  });
   if (!r.ok) throw new Error(`portal-jobs-${r.status}`);
   const body = await r.json();
   jobsCache = Array.isArray(body.jobs) ? body.jobs : [];

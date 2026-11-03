@@ -10456,16 +10456,22 @@ function HiddenJobRouter({ slug }) {
   useEffect(() => {
     let cancelled = false;
     setState({ status: "loading", job: null });
-    // Fetch the full list (includeHidden) and match the slug AFTER
-    // running each record through normalizeJob. This lets us treat
-    // slugs from SEED_JOBS as canonical even when the portal KV
-    // record has no slug field set — slug is a SEED_PINNED_FIELD.
-    fetch(`${VORA_API}/api/vora/jobs?includeHidden=true`)
+    // Fetch the board plus this slug's own record (the portal serves a
+    // hidden role only by its slug; it no longer lists them all to a
+    // browser), then match the slug AFTER running each record through
+    // normalizeJob. This lets us treat slugs from SEED_JOBS as canonical
+    // even when the portal KV record has no slug field set — slug is a
+    // SEED_PINNED_FIELD.
+    const jobsAt = (query) => fetch(`${VORA_API}/api/vora/jobs${query}`)
       .then((r) => (r.ok ? r.json() : null))
       .catch(() => null)
-      .then((body) => {
+      .then((body) => (Array.isArray(body?.jobs) ? body.jobs : []));
+    Promise.all([jobsAt(""), jobsAt(`?slug=${encodeURIComponent(slug)}&includeHidden=true`)])
+      .then(([board, bySlug]) => {
         if (cancelled) return;
-        const list = Array.isArray(body?.jobs) ? body.jobs : [];
+        const byId = new Map();
+        for (const j of [...board, ...bySlug]) if (j && j.id != null) byId.set(String(j.id), j);
+        const list = [...byId.values()];
         const normalized = withDerivedSalaries(list.map((j) => normalizeJob(j)).filter(Boolean));
         // Archived roles keep their records but must not resolve to a live
         // apply page by URL — old ads and links fall through to the board.
